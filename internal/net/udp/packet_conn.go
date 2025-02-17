@@ -17,8 +17,10 @@
 package udp
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -202,6 +204,21 @@ func Listen(network string, laddr *net.UDPAddr) (dtlsnet.PacketListener, error) 
 	return (&ListenConfig{}).Listen(network, laddr)
 }
 
+func transformBytesToHexstring(data []byte) string {
+	var buffer bytes.Buffer
+	for _, b := range data {
+		buffer.WriteString(fmt.Sprintf("%02X ", b))
+	}
+
+	result := buffer.String()
+
+	if len(result) > 0 {
+		result = result[:len(result)-1]
+	}
+
+	return result
+}
+
 // readLoop dispatches packets to the proper connection, creating a new one if
 // necessary, until all connections are closed.
 func (l *listener) readLoop() {
@@ -212,6 +229,7 @@ func (l *listener) readLoop() {
 
 	for {
 		n, raddr, err := l.pConn.ReadFrom(buf)
+		fmt.Printf("Data are %s", transformBytesToHexstring(buf[:n]))
 		if err != nil {
 			l.errRead.Store(err)
 
